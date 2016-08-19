@@ -42,53 +42,38 @@
   #:use-module (gnu packages mp3)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
-  
-  #:use-module (gnu packages emacs)
- )
+  #:use-module (gnu packages emacs))
 
 (define-public emacs-master
   ;; This is the updated master version for emacs
   (package (inherit emacs)
-	   (version "201608182129")
-	   (name "emacs-master")
-	   (source (origin
-		     (method git-fetch)
-		     (uri (git-reference
-			   (url "git://git.savannah.gnu.org/emacs.git"
-				;;"/home/ksjogo/dev/ksjogo-guix/upstream/emacs"
-				)
-			   (commit "8fcf3df9395a3b1196fd5c95aeebba9e75f69247")))
-		     (sha256
-		      (base32 "1d7hmnwhdc6msq0v606i3by24dh74bdscjq7mslwv4w89x1lnvw9"))
-		     (patches (search-patches "emacs-exec-path.patch"
-					      ;;"emacs-fix-scheme-indent-function.patch"
-					      ;;"emacs-source-date-epoch.patch"
-					      ))
-		     (modules '((guix build utils)))
-		     (snippet
-		      ;; Delete the bundled byte-compiled elisp files and
-		      ;; generated autoloads.
-		      '(with-directory-excursion "lisp"
-			 (for-each delete-file
-				   (append (find-files "." "\\.elc$")
-					   (find-files "." "loaddefs\\.el$")
-					   ;; This is the only "autoloads" file that
-					   ;; does not have "*loaddefs.el" name.
-					   ;;'("eshell/esh-groups.el")
-					   ))))))
-	   (native-inputs
-	    `(("autoconf" ,autoconf)
-	      ("automake" ,automake)
-	      ,@(package-native-inputs emacs)))
+           (version "201608182129")
+           (name "emacs-master")
+           (source (origin
+                     (method git-fetch)
+                     (uri (git-reference
+                           (url "git://git.savannah.gnu.org/emacs.git")
+                           (commit "8fcf3df9395a3b1196fd5c95aeebba9e75f69247")))
+                     (sha256
+                      (base32 "1d7hmnwhdc6msq0v606i3by24dh74bdscjq7mslwv4w89x1lnvw9"))
+                     (patches (search-patches "emacs-exec-path.patch"
+                                              ;;"emacs-fix-scheme-indent-function.patch"
+                                              ;;"emacs-source-date-epoch.patch"
+                                              ))
+                     (modules '((guix build utils)))))
+           (native-inputs
+            `(("autoconf" ,autoconf)
+              ("automake" ,automake)
+              ,@(package-native-inputs emacs)))
 
-	   (arguments
-	    (substitute-keyword-arguments `(#:parallel-build? #t
-					    #:tests? #f
-					   ,@(package-arguments emacs))
-	      ((#:phases phases)
-	       `(modify-phases ,phases
-		  (add-after 'unpack 'autogen
-		    (lambda _
-		      (zero? (system* "sh" "autogen.sh"))))))))))
-	   
-
+           (arguments
+            (substitute-keyword-arguments
+                `(#:parallel-build? #t
+                                    #:tests? #f
+                                    #:configure-flags '("--with-modules")
+                                    ,@(package-arguments emacs))
+              ((#:phases phases)
+               `(modify-phases ,phases
+                  (add-after 'unpack 'autogen
+                    (lambda _
+                      (zero? (system* "sh" "autogen.sh"))))))))))
